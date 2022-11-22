@@ -32,6 +32,7 @@ class mqttSerialBridge(mqtt.Client) :
         
     def stop(self):
         # MQTT loop stop
+        self.loop_stop()
         # serial aggregator stop
         self.serialAggregator.stop()
         
@@ -43,25 +44,40 @@ class mqttSerialBridge(mqtt.Client) :
         
     def on_message(self, client, userdata, msg) :
         # parse/convert node id from topic and create node identifier
-        node = msg.topic().split('/')[2]
+        node = msg.topic.split('/')[2]
         # decode data
         data = msg.payload.decode()
         # send it to node
-        self.serialAggregator.send_nodes(node, data)
+        print(node,'<-', msg.payload, data)
+        self.serialAggregator.send_nodes([node,], data)
         
     def line_handler(self, identifier, line):
-        print("{}: {}".format(identifier, line))
-        # parse node ID
-        # add this node to subscribe if not already the case
+        now = time.time()
+        print("{} -> {}".format(identifier, line))
         # publish as raw data on testbed/node/+/out
-        # json-ify the data, publish it on testbed/node/+/json_out
-        
+        rawDict = {
+            'timestamp':    now,
+            'node_id':      identifier,
+            'payload':      line.strip('\r')
+            }
+        self.publish('testbed_dev/node/{}/out'.format(identifier), json.dumps(rawDict))
+        # attempt to json-ify the data, publish it on testbed/node/+/json_out
+        try :
+            jsonDict = {
+                'timestamp':    now,
+                'node_id':      identifier,
+                'payload':      json.loads(line)
+                }
+            self.publish('testbed_dev/node/{}/out_json'.format(identifier), json.dumps(rawDict))
+        except json.decoder.JSONDecodeError :
+            pass
+            
         
 if __name__ == '__main__':
     # test debug draft dirty config with hack bridge on 10.254.253.1
     opts = SerialAggregator.parser.parse_args(None)
     nodes_list = SerialAggregator.select_nodes(opts)
-    print(nodes_list)
-    
     bridge = mqttSerialBridge(nodes_list, '10.254.253.1')
     bridge.loop_forever()
+    
+    

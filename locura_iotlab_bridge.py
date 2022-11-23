@@ -4,6 +4,7 @@ import paho.mqtt.client as mqtt
 import time
 import json
 import argparse
+import os
 
 
 class mqttSerialBridge(mqtt.Client) :
@@ -107,6 +108,12 @@ if __name__ == '__main__':
     opts = SerialAggregator.parser.parse_args("")
     nodes_list = SerialAggregator.select_nodes(opts)
     
+    # get the username/pwd for environment variables
+    if args.username is None and 'LC_LIBRIDGE_USER' in os.environ:
+        args.username = os.environ['LC_LIBRIDGE_USER']
+    if args.password is None and 'LC_LIBRIDGE_PWD' in os.environ:
+        args.password = os.environ['LC_LIBRIDGE_PWD']
+
     bridge = mqttSerialBridge(nodes_list, args.broker, username=args.username, password=args.password, IDMap=mapping, port=args.port)
     bridge.loop_forever()
     

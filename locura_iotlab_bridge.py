@@ -3,10 +3,10 @@ from iotlabaggregator.serial import SerialAggregator
 import paho.mqtt.client as mqtt
 import time
 import json
+import argparse
 
 
 class mqttSerialBridge(mqtt.Client) :
-
     def __init__(self, nodeList, brokerAddress, username=None, password=None, IDMap=None, port=1883, experimentID = None, clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp") :
         super().__init__(client_id="mqttSerialBridge", clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp")
         self.brokerAddress = brokerAddress
@@ -84,15 +84,30 @@ class mqttSerialBridge(mqtt.Client) :
             
         
 if __name__ == '__main__':
-    # TODO FIXME test debug draft dirty config with hack bridge on 10.254.253.1
+    parser = argparse.ArgumentParser(prog = 'LocuURa<->iotlab bridge')
+    parser.add_argument('-f','--idFile', action='store', required=True,
+                    help='json dictionnary file with iotlab IDs ans keys and locura IDs as values.')
+    parser.add_argument('-b','--broker', action='store', required=True,
+                    help='Broker address')
+    parser.add_argument('-P','--port', action='store', default=1883,
+                    help='Broker port')
+    parser.add_argument('-u','--username', action='store', default=None,
+                    help='username on the broker. Notice : LC_LIBRIDGE_USER environment variable has the same effect, though this argument will override the environment variable')
+    parser.add_argument('-p','--password', action='store', default=None,
+                    help='password on the broker. Advice : use LC_LIBRIDGE_PWD environment variable instead. This argument will override the environment variable')
+    args = parser.parse_args()
+
     d = ''
-    with open('./ID_mapping_dev.json','r') as f :
+    with open(args.idFile,'r') as f :
         for l in f.readlines() :
             d += l
     mapping = json.loads(d)
-    opts = SerialAggregator.parser.parse_args(None)
+
+    # let's exploit automatic things from serialaggregator
+    opts = SerialAggregator.parser.parse_args("")
     nodes_list = SerialAggregator.select_nodes(opts)
-    bridge = mqttSerialBridge(nodes_list, '10.254.253.1', username='qvey', password='testtest123', IDMap=mapping)
+    
+    bridge = mqttSerialBridge(nodes_list, args.broker, username=args.username, password=args.password, IDMap=mapping, port=args.port)
     bridge.loop_forever()
     
     

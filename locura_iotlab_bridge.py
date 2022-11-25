@@ -72,6 +72,8 @@ class mqttSerialBridge(mqtt.Client) :
         identifier2 = identifier
         if not self.IDMap is None and identifier in self.IDMap :
             identifier2 = self.IDMap[identifier]
+        else :
+            print(identifier, identifier in self.IDMap )
         
         # publish as raw data on testbed/node/+/out
         rawDict = {
@@ -79,7 +81,8 @@ class mqttSerialBridge(mqtt.Client) :
             'node_id':      identifier2,
             'payload':      line.strip('\r')
             }
-        self.publish('testbed/node/{}/out'.format(identifier), json.dumps(rawDict))
+        self.publish('testbed/node/{}/out'.format(identifier2), json.dumps(rawDict))
+        print('testbed/node/{}/out'.format(identifier),self.IDMap)
         # attempt to json-ify the data, publish it on testbed/node/+/json_out
         try :
             jsonDict = {
@@ -87,7 +90,7 @@ class mqttSerialBridge(mqtt.Client) :
                 'node_id':      identifier2,
                 'payload':      json.loads(line)
                 }
-            self.publish('testbed/node/{}/out_json'.format(identifier), json.dumps(rawDict))
+            self.publish('testbed/node/{}/out_json'.format(identifier2), json.dumps(rawDict))
         except json.decoder.JSONDecodeError :
             pass
 #        print(time.time(), "{} -> {}".format(identifier2, line))

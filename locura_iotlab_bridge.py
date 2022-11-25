@@ -4,7 +4,7 @@ import paho.mqtt.client as mqtt
 import time
 import json
 import argparse
-import os
+import os, sys
 
 
 class mqttSerialBridge(mqtt.Client) :
@@ -18,6 +18,7 @@ class mqttSerialBridge(mqtt.Client) :
             self.username_pw_set(username, password)
         self.IDMap  = IDMap
         self.rIDMap = {v:k for k,v in IDMap.items()} if not IDMap is None else None
+        self.looping = False
         
     def start(self):
         # MQTT connect
@@ -26,6 +27,7 @@ class mqttSerialBridge(mqtt.Client) :
         self.loop_start()
         # serial aggregator start
         self.serialAggregator.start()
+        self.looping = True
         
     def loop_forever(self):
         # MQTT connect
@@ -40,12 +42,19 @@ class mqttSerialBridge(mqtt.Client) :
         self.loop_stop()
         # serial aggregator stop
         self.serialAggregator.stop()
+        self.looping = False
         
         
     def on_connect(self, client, userdata, flags, rc):
+        if rc != 0 :
+            print("Return code",rc,"on MQTT connect")
+            if rc == 5 :
+                print("Check MQTT credentials")
+            self.looping = False
+            
         # subscribe on specific node topic
         for node in self.nodeList :
-            self.subscribe('testbed_dev/node/{}/in'.format(node))
+            self.subscribe('testbed/node/{}/in'.format(node))
         
     def on_message(self, client, userdata, msg) :
         # parse/convert node id from topic and create node identifier
@@ -55,7 +64,7 @@ class mqttSerialBridge(mqtt.Client) :
         # decode data
         data = msg.payload.decode()
         # send it to node
-        print(time.time(), node,'<-', msg.payload, data)
+#        print(time.time(), node,'<-', msg.payload, data)
         self.serialAggregator.send_nodes([node,], data)
         
     def line_handler(self, identifier, line):
@@ -70,7 +79,7 @@ class mqttSerialBridge(mqtt.Client) :
             'node_id':      identifier2,
             'payload':      line.strip('\r')
             }
-        self.publish('testbed_dev/node/{}/out'.format(identifier), json.dumps(rawDict))
+        self.publish('testbed/node/{}/out'.format(identifier), json.dumps(rawDict))
         # attempt to json-ify the data, publish it on testbed/node/+/json_out
         try :
             jsonDict = {
@@ -78,13 +87,13 @@ class mqttSerialBridge(mqtt.Client) :
                 'node_id':      identifier2,
                 'payload':      json.loads(line)
                 }
-            self.publish('testbed_dev/node/{}/out_json'.format(identifier), json.dumps(rawDict))
+            self.publish('testbed/node/{}/out_json'.format(identifier), json.dumps(rawDict))
         except json.decoder.JSONDecodeError :
             pass
-        print(time.time(), "{} -> {}".format(identifier2, line))
+#        print(time.time(), "{} -> {}".format(identifier2, line))
             
-        
 if __name__ == '__main__':
+    
     parser = argparse.ArgumentParser(prog = 'LocuURa<->iotlab bridge')
     parser.add_argument('-f','--idFile', action='store', required=True,
                     help='json dictionnary file with iotlab IDs ans keys and locura IDs as values.')
@@ -104,7 +113,11 @@ if __name__ == '__main__':
             d += l
     mapping = json.loads(d)
 
-    # let's exploit automatic things from serialaggregator
+    # Let's exploit automatic things from serialaggregator
+    # We don't care about allowing the user to supply their username/password
+    # because this script is only ever to be used directly on 
+    # (dev)toulouse.iot-lab.info SSH frontend, where these are supplied as
+    # environment variables
     opts = SerialAggregator.parser.parse_args("")
     nodes_list = SerialAggregator.select_nodes(opts)
     

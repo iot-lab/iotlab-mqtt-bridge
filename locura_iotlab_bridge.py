@@ -72,8 +72,6 @@ class mqttSerialBridge(mqtt.Client) :
         identifier2 = identifier
         if not self.IDMap is None and identifier in self.IDMap :
             identifier2 = self.IDMap[identifier]
-        else :
-            print(identifier, identifier in self.IDMap )
         
         # publish as raw data on testbed/node/+/out
         rawDict = {
@@ -82,7 +80,7 @@ class mqttSerialBridge(mqtt.Client) :
             'payload':      line.strip('\r')
             }
         self.publish('testbed/node/{}/out'.format(identifier2), json.dumps(rawDict))
-        print('testbed/node/{}/out'.format(identifier),self.IDMap)
+#        print('testbed/node/{}/out'.format(identifier),self.IDMap)
         # attempt to json-ify the data, publish it on testbed/node/+/json_out
         try :
             jsonDict = {
@@ -98,7 +96,7 @@ class mqttSerialBridge(mqtt.Client) :
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(prog = 'LocuURa<->iotlab bridge')
-    parser.add_argument('-f','--idFile', action='store', required=True,
+    parser.add_argument('-f','--idFile', action='store', default=None, required=False,
                     help='json dictionnary file with iotlab IDs ans keys and locura IDs as values.')
     parser.add_argument('-b','--broker', action='store', required=True,
                     help='Broker address')
@@ -110,11 +108,14 @@ if __name__ == '__main__':
                     help='password on the broker. Advice : use LC_LIBRIDGE_PWD environment variable instead. This argument will override the environment variable')
     args = parser.parse_args()
 
-    d = ''
-    with open(args.idFile,'r') as f :
-        for l in f.readlines() :
-            d += l
-    mapping = json.loads(d)
+    if args.idFile is not None :
+        d = ''
+        with open(args.idFile,'r') as f :
+            for l in f.readlines() :
+                d += l
+        mapping = json.loads(d)
+    else :
+        mapping = None
 
     # Let's exploit automatic things from serialaggregator
     # We don't care about allowing the user to supply their username/password

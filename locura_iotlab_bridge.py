@@ -8,7 +8,7 @@ import os, sys
 
 
 class mqttSerialBridge(mqtt.Client) :
-    def __init__(self, nodeList, brokerAddress, username=None, password=None, IDMap=None, port=1883, experimentID = None, clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp") :
+    def __init__(self, nodeList, brokerAddress, username=None, password=None, verbose = None, IDMap=None, port=1883, experimentID = None, clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp") :
         super().__init__(client_id="mqttSerialBridge", clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp")
         self.brokerAddress = brokerAddress
         self.port = port
@@ -19,6 +19,7 @@ class mqttSerialBridge(mqtt.Client) :
         self.IDMap  = IDMap
         self.rIDMap = {v:k for k,v in IDMap.items()} if not IDMap is None else None
         self.looping = False
+        self.verbose = verbose if verbose else 0
         
     def start(self):
         # MQTT connect
@@ -46,15 +47,20 @@ class mqttSerialBridge(mqtt.Client) :
         
         
     def on_connect(self, client, userdata, flags, rc):
-        if rc != 0 :
+        if self.verbose >= 1 : 
             print("Return code",rc,"on MQTT connect")
+        if rc != 0 :
+            print("Error return code",rc,"on MQTT connect")
             if rc == 5 :
                 print("Check MQTT credentials")
             self.looping = False
             
         # subscribe on specific node topic
         for node in self.nodeList :
-            self.subscribe('testbed/node/{}/in'.format(node))
+            topic = 'testbed/node/{}/in'.format(node)
+            self.subscribe()
+            if self.verbose >= 1 : 
+                print("subscribed to", topic)
         
     def on_message(self, client, userdata, msg) :
         # parse/convert node id from topic and create node identifier
@@ -64,8 +70,9 @@ class mqttSerialBridge(mqtt.Client) :
         # decode data
         data = msg.payload.decode()
         # send it to node
-#        print(time.time(), node,'<-', msg.payload, data)
         self.serialAggregator.send_nodes([node,], data)
+        if self.verbose >= 2 : 
+            print(time.time(), node,'<-', data)
         
     def line_handler(self, identifier, line):
         now = time.time()
@@ -91,7 +98,8 @@ class mqttSerialBridge(mqtt.Client) :
             self.publish('testbed/node/{}/out_json'.format(identifier2), json.dumps(rawDict))
         except json.decoder.JSONDecodeError :
             pass
-#        print(time.time(), "{} -> {}".format(identifier2, line))
+        if self.verbose >= 2 : 
+            print(time.time(), "{} -> {}".format(identifier2, line))
             
 if __name__ == '__main__':
     
@@ -100,12 +108,14 @@ if __name__ == '__main__':
                     help='json dictionnary file with iotlab IDs ans keys and locura IDs as values.')
     parser.add_argument('-b','--broker', action='store', required=True,
                     help='Broker address')
+    parser.add_argument('-v','--verbose', action='count', default=os.environ['LI_BRIDGE_VERBOSE'],
+                    help='Verbosity. Specify multiple times for more noise. LI_BRIDGE_VERBOSE environment variable can be used with the same effect.')
     parser.add_argument('-P','--port', action='store', default=1883,
                     help='Broker port')
-    parser.add_argument('-u','--username', action='store', default=None,
-                    help='username on the broker. Notice : LC_LIBRIDGE_USER environment variable has the same effect, though this argument will override the environment variable')
-    parser.add_argument('-p','--password', action='store', default=None,
-                    help='password on the broker. Advice : use LC_LIBRIDGE_PWD environment variable instead. This argument will override the environment variable')
+    parser.add_argument('-u','--username', action='store', default=os.environ['LI_BRIDGE_USER'],
+                    help='username on the broker. Notice : LI_BRIDGE_USER environment variable has the same effect. This argument will override the environment variable')
+    parser.add_argument('-p','--password', action='store', default=os.environ['LI_BRIDGE_PWD'],
+                    help='password on the broker. Advice : use LI_BRIDGE_PWD environment variable instead. This argument will override the environment variable')
     args = parser.parse_args()
 
     if args.idFile is not None :
@@ -125,13 +135,8 @@ if __name__ == '__main__':
     opts = SerialAggregator.parser.parse_args("")
     nodes_list = SerialAggregator.select_nodes(opts)
     
-    # get the username/pwd for environment variables
-    if args.username is None and 'LC_LIBRIDGE_USER' in os.environ:
-        args.username = os.environ['LC_LIBRIDGE_USER']
-    if args.password is None and 'LC_LIBRIDGE_PWD' in os.environ:
-        args.password = os.environ['LC_LIBRIDGE_PWD']
 
-    bridge = mqttSerialBridge(nodes_list, args.broker, username=args.username, password=args.password, IDMap=mapping, port=args.port)
+    bridge = mqttSerialBridge(nodes_list, args.broker, username=args.username, password=args.password, IDMap=mapping, port=args.port, verbose = args.verbose)
     bridge.loop_forever()
     
     

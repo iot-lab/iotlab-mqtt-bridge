@@ -47,11 +47,11 @@ class mqttSerialBridge(mqtt.Client) :
         
     def on_connect(self, client, userdata, flags, rc):
         if self.verbose >= 1 : 
-            print("Return code",rc,"on MQTT connect")
+            print("Return code",rc,"on MQTT connect", file=sys.stderr)
         if rc != 0 :
-            print("Error return code",rc,"on MQTT connect")
+            print("Error return code",rc,"on MQTT connect", file=sys.stderr)
             if rc == 5 :
-                print("Check MQTT credentials")
+                print("Check MQTT credentials", file=sys.stderr)
             self.looping = False
             
         # subscribe on specific node topic
@@ -59,7 +59,7 @@ class mqttSerialBridge(mqtt.Client) :
             topic = 'testbed/node/{}/in'.format(node)
             self.subscribe(topic)
             if self.verbose >= 1 : 
-                print("subscribed to", topic)
+                print("subscribed to", topic, file=sys.stderr)
         
     def on_message(self, client, userdata, msg) :
         # parse/convert node id from topic and create node identifier
@@ -71,7 +71,7 @@ class mqttSerialBridge(mqtt.Client) :
         # send it to node
         self.serialAggregator.send_nodes([node,], data)
         if self.verbose >= 2 : 
-            print(time.time(), node,'<-', data)
+            print(time.time(), node,'<-', data, file=sys.stderr)
         
     def line_handler(self, identifier, line):
         now = time.time()
@@ -86,7 +86,7 @@ class mqttSerialBridge(mqtt.Client) :
             'payload':      line.strip('\r')
             }
         self.publish('testbed/node/{}/out'.format(identifier2), json.dumps(rawDict))
-#        print('testbed/node/{}/out'.format(identifier),self.IDMap)
+#        print('testbed/node/{}/out'.format(identifier),self.IDMap, file=sys.stderr)
         # attempt to json-ify the data, publish it on testbed/node/+/json_out
         try :
             jsonDict = {
@@ -98,7 +98,7 @@ class mqttSerialBridge(mqtt.Client) :
         except json.decoder.JSONDecodeError :
             pass
         if self.verbose >= 2 : 
-            print(time.time(), "{} -> {}".format(identifier2, line))
+            print(time.time(), "{} -> {}".format(identifier2, line), file=sys.stderr)
 
 if __name__ == '__main__':
     

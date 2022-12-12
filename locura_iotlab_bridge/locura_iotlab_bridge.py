@@ -6,7 +6,6 @@ import json
 import argparse
 import os, sys
 
-
 class mqttSerialBridge(mqtt.Client) :
     def __init__(self, nodeList, brokerAddress, username=None, password=None, verbose = None, IDMap=None, port=1883, experimentID = None, clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp") :
         super().__init__(client_id="mqttSerialBridge", clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp")
@@ -58,7 +57,7 @@ class mqttSerialBridge(mqtt.Client) :
         # subscribe on specific node topic
         for node in self.nodeList :
             topic = 'testbed/node/{}/in'.format(node)
-            self.subscribe()
+            self.subscribe(topic)
             if self.verbose >= 1 : 
                 print("subscribed to", topic)
         
@@ -100,17 +99,17 @@ class mqttSerialBridge(mqtt.Client) :
             pass
         if self.verbose >= 2 : 
             print(time.time(), "{} -> {}".format(identifier2, line))
-            
+
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(prog = 'LocuURa<->iotlab bridge')
     parser.add_argument('-f','--idFile', action='store', default=None, required=False,
                     help='json dictionnary file with iotlab IDs ans keys and locura IDs as values.')
-    parser.add_argument('-b','--broker', action='store', required=True,
+    parser.add_argument('-b','--broker', action='store', default=os.environ['LI_BRIDGE_HOST'],
                     help='Broker address')
-    parser.add_argument('-v','--verbose', action='count', default=os.environ['LI_BRIDGE_VERBOSE'],
+    parser.add_argument('-v','--verbose', action='count', default=int(os.environ['LI_BRIDGE_VERBOSE']),
                     help='Verbosity. Specify multiple times for more noise. LI_BRIDGE_VERBOSE environment variable can be used with the same effect.')
-    parser.add_argument('-P','--port', action='store', default=1883,
+    parser.add_argument('-P','--port', action='store', default=int(os.environ['LI_BRIDGE_PORT']),
                     help='Broker port')
     parser.add_argument('-u','--username', action='store', default=os.environ['LI_BRIDGE_USER'],
                     help='username on the broker. Notice : LI_BRIDGE_USER environment variable has the same effect. This argument will override the environment variable')

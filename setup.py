@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='locura_iotlab_bridge',
-    version='0.1.5',    
+    version='0.1.6',    
     description='Bridge to connect LocURa MQTT ecosystem to IOT-LAB',
     url='https://gitlab.irit.fr/rmess/locura/infra/locura_iotlab_bridge',
     author='Quentin Vey',

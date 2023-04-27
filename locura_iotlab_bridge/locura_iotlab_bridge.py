@@ -137,7 +137,7 @@ if __name__ == '__main__':
     nodes_list = SerialAggregator.select_nodes(opts)
     
 
-    bridge = mqttSerialBridge(nodes_list, args.broker, username=args.username, password=args.password, IDMap=mapping, port=args.port, verbose = args.verbose, topic=args.topic_root)
+    bridge = mqttSerialBridge(nodes_list, args.broker, username=args.username, password=args.password, IDMap=mapping, port=args.port, verbose = args.verbose, topicRoot=args.topic_root)
     bridge.loop_forever()
     
     

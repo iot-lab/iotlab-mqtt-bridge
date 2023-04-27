@@ -7,7 +7,7 @@ import argparse
 import os, sys
 
 class mqttSerialBridge(mqtt.Client) :
-    def __init__(self, nodeList, brokerAddress, username=None, password=None, verbose = None, IDMap=None, port=1883, experimentID = None, clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp") :
+    def __init__(self, nodeList, brokerAddress, username=None, password=None, verbose = None, IDMap=None, topicRoot = '',port=1883, experimentID = None, clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp") :
         super().__init__(client_id="mqttSerialBridge", clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp")
         self.brokerAddress = brokerAddress
         self.port = port
@@ -19,6 +19,7 @@ class mqttSerialBridge(mqtt.Client) :
         self.rIDMap = {v:k for k,v in IDMap.items()} if not IDMap is None else None
         self.looping = False
         self.verbose = verbose if verbose else 0
+        self.topicRoot = topicRoot if topicRoot[-1] != '/' else topicRoot[:-1]
         
     def start(self):
         # MQTT connect
@@ -56,7 +57,7 @@ class mqttSerialBridge(mqtt.Client) :
             
         # subscribe on specific node topic
         for node in self.nodeList :
-            topic = 'testbed/node/{}/in'.format(node)
+            topic = '{}/{}/in'.format(self.topicRoot, node)
             self.subscribe(topic)
             if self.verbose >= 1 : 
                 print("subscribed to", topic, file=sys.stderr)
@@ -85,8 +86,7 @@ class mqttSerialBridge(mqtt.Client) :
             'node_id':      identifier2,
             'payload':      line.strip('\r')
             }
-        self.publish('testbed/node/{}/out'.format(identifier2), json.dumps(rawDict))
-#        print('testbed/node/{}/out'.format(identifier),self.IDMap, file=sys.stderr)
+        self.publish('{}/{}/out'.format(self.topicRoot,identifier2), json.dumps(rawDict))
         # attempt to json-ify the data, publish it on testbed/node/+/json_out
         try :
             jsonDict = {
@@ -94,7 +94,7 @@ class mqttSerialBridge(mqtt.Client) :
                 'node_id':      identifier2,
                 'payload':      json.loads(line)
                 }
-            self.publish('testbed/node/{}/out_json'.format(identifier2), json.dumps(rawDict))
+            self.publish('{}/{}/out_json'.format(self.topicRoot,identifier2), json.dumps(rawDict))
         except json.decoder.JSONDecodeError :
             pass
         if self.verbose >= 2 : 
@@ -115,6 +115,8 @@ if __name__ == '__main__':
                     help='username on the broker. Notice : LI_BRIDGE_USER environment variable has the same effect. This argument will override the environment variable')
     parser.add_argument('-p','--password', action='store', default=os.environ['LI_BRIDGE_PWD'],
                     help='password on the broker. Advice : use LI_BRIDGE_PWD environment variable instead. This argument will override the environment variable')
+    parser.add_argument('-t','--topic_root', action='store', default=os.environ['LI_BRIDGE_TOPIC'],
+                    help='root of the topics. Topics used will be <topic_root>/node-id/out[_json] and <topic_root>/node-id/in')
     args = parser.parse_args()
 
     if args.idFile is not None :

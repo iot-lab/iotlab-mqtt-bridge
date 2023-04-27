@@ -105,17 +105,17 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog = 'LocuURa<->iotlab bridge')
     parser.add_argument('-f','--idFile', action='store', default=None, required=False,
                     help='json dictionnary file with iotlab IDs ans keys and locura IDs as values.')
-    parser.add_argument('-b','--broker', action='store', default=os.environ['LI_BRIDGE_HOST'],
+    parser.add_argument('-b','--broker', action='store', default=os.environ['LI_BRIDGE_HOST'] if 'LI_BRIDGE_HOST' in os.environ else '127.0.0.1',
                     help='Broker address')
-    parser.add_argument('-v','--verbose', action='count', default=int(os.environ['LI_BRIDGE_VERBOSE']),
+    parser.add_argument('-v','--verbose', action='count', default=int(os.environ['LI_BRIDGE_VERBOSE'] if 'LI_BRIDGE_VERBOSE' in os.environ else False),
                     help='Verbosity. Specify multiple times for more noise. LI_BRIDGE_VERBOSE environment variable can be used with the same effect.')
-    parser.add_argument('-P','--port', action='store', default=int(os.environ['LI_BRIDGE_PORT']),
+    parser.add_argument('-P','--port', action='store', default=int(os.environ['LI_BRIDGE_PORT'] if 'LI_BRIDGE_PORT' in os.environ else 1883),
                     help='Broker port')
-    parser.add_argument('-u','--username', action='store', default=os.environ['LI_BRIDGE_USER'],
+    parser.add_argument('-u','--username', action='store', default=os.environ['LI_BRIDGE_USER' if 'LI_BRIDGE_USER' in os.environ else ''],
                     help='username on the broker. Notice : LI_BRIDGE_USER environment variable has the same effect. This argument will override the environment variable')
-    parser.add_argument('-p','--password', action='store', default=os.environ['LI_BRIDGE_PWD'],
+    parser.add_argument('-p','--password', action='store', default=os.environ['LI_BRIDGE_PWD'] if 'LI_BRIDGE_PWD' in os.environ else '',
                     help='password on the broker. Advice : use LI_BRIDGE_PWD environment variable instead. This argument will override the environment variable')
-    parser.add_argument('-t','--topic_root', action='store', default=os.environ['LI_BRIDGE_TOPIC'],
+    parser.add_argument('-t','--topic_root', action='store', default=os.environ['LI_BRIDGE_TOPIC'] if 'LI_BRIDGE_TOPIC' in os.environ else '',
                     help='root of the topics. Topics used will be <topic_root>/node-id/out[_json] and <topic_root>/node-id/in')
     args = parser.parse_args()
 

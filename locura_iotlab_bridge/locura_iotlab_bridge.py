@@ -7,7 +7,7 @@ import argparse
 import os, sys
 
 class mqttSerialBridge(mqtt.Client) :
-    def __init__(self, nodeList, brokerAddress, username=None, password=None, verbose = None, IDMap=None, topicRoot = '',port=1883, experimentID = None, clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp") :
+    def __init__(self, nodeList, brokerAddress, username=None, password=None, verbose = None, IDMap=None, topicRoot = '/',port=1883, experimentID = None, clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp") :
         super().__init__(client_id="mqttSerialBridge", clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp")
         self.brokerAddress = brokerAddress
         self.port = port
@@ -111,7 +111,7 @@ if __name__ == '__main__':
                     help='Verbosity. Specify multiple times for more noise. LI_BRIDGE_VERBOSE environment variable can be used with the same effect.')
     parser.add_argument('-P','--port', action='store', default=int(os.environ['LI_BRIDGE_PORT'] if 'LI_BRIDGE_PORT' in os.environ else 1883),
                     help='Broker port')
-    parser.add_argument('-u','--username', action='store', default=os.environ['LI_BRIDGE_USER' if 'LI_BRIDGE_USER' in os.environ else ''],
+    parser.add_argument('-u','--username', action='store', default=os.environ['LI_BRIDGE_USER'] if 'LI_BRIDGE_USER' in os.environ else '',
                     help='username on the broker. Notice : LI_BRIDGE_USER environment variable has the same effect. This argument will override the environment variable')
     parser.add_argument('-p','--password', action='store', default=os.environ['LI_BRIDGE_PWD'] if 'LI_BRIDGE_PWD' in os.environ else '',
                     help='password on the broker. Advice : use LI_BRIDGE_PWD environment variable instead. This argument will override the environment variable')
@@ -137,7 +137,7 @@ if __name__ == '__main__':
     nodes_list = SerialAggregator.select_nodes(opts)
     
 
-    bridge = mqttSerialBridge(nodes_list, args.broker, username=args.username, password=args.password, IDMap=mapping, port=args.port, verbose = args.verbose)
+    bridge = mqttSerialBridge(nodes_list, args.broker, username=args.username, password=args.password, IDMap=mapping, port=args.port, verbose = args.verbose, topic=args.topic_root)
     bridge.loop_forever()
     
     

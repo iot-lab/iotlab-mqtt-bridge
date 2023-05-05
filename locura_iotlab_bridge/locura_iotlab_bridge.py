@@ -133,7 +133,7 @@ if __name__ == '__main__':
     # because this script is only ever to be used directly on 
     # (dev)toulouse.iot-lab.info SSH frontend, where these are supplied as
     # environment variables
-    opts = SerialAggregator.parser.parse_args("")
+    opts = SerialAggregator.parser.parse_args(['--id', os.environ['EXP_ID']] if 'EXP_ID' in os.environ else '')
     nodes_list = SerialAggregator.select_nodes(opts)
     
 

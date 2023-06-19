@@ -58,7 +58,7 @@ class mqttSerialBridge(mqtt.Client) :
         # subscribe on specific node topic
         for node in self.nodeList :
             topic = '{}/{}/in'.format(self.topicRoot, node)
-            self.subscribe(topic)
+            self.subscribe(topic, 2)
             if self.verbose >= 1 : 
                 print("subscribed to", topic, file=sys.stderr)
         
@@ -86,7 +86,7 @@ class mqttSerialBridge(mqtt.Client) :
             'node_id':      identifier2,
             'payload':      line.strip('\r')
             }
-        self.publish('{}/{}/out'.format(self.topicRoot,identifier2), json.dumps(rawDict))
+        self.publish('{}/{}/out'.format(self.topicRoot,identifier2), json.dumps(rawDict),0)
         # attempt to json-ify the data, publish it on testbed/node/+/json_out
         try :
             jsonDict = {
@@ -94,7 +94,7 @@ class mqttSerialBridge(mqtt.Client) :
                 'node_id':      identifier2,
                 'payload':      json.loads(line)
                 }
-            self.publish('{}/{}/out_json'.format(self.topicRoot,identifier2), json.dumps(rawDict))
+            self.publish('{}/{}/out_json'.format(self.topicRoot,identifier2), json.dumps(rawDict),0)
         except json.decoder.JSONDecodeError :
             pass
         if self.verbose >= 2 : 
@@ -135,6 +135,15 @@ if __name__ == '__main__':
     # environment variables
     opts = SerialAggregator.parser.parse_args(['--id', os.environ['EXP_ID']] if 'EXP_ID' in os.environ else '')
     nodes_list = SerialAggregator.select_nodes(opts)
+    
+    if args.verbose :
+        print(time.time(), "Started with verbosity {}".format(args.verbose), file=sys.stderr)
+        print("broker", args.broker, file=sys.stderr)
+        print("port", args.port, file=sys.stderr)
+        print("username", args.username, file=sys.stderr)
+        print("password", args.password, file=sys.stderr)
+        print("topicRoot", args.topic_root, file=sys.stderr)
+        
     
 
     bridge = mqttSerialBridge(nodes_list, args.broker, username=args.username, password=args.password, IDMap=mapping, port=args.port, verbose = args.verbose, topicRoot=args.topic_root)

@@ -94,7 +94,7 @@ class mqttSerialBridge(mqtt.Client) :
                 'node_id':      identifier2,
                 'payload':      json.loads(line)
                 }
-            self.publish('{}/{}/out_json'.format(self.topicRoot,identifier2), json.dumps(rawDict),0)
+            self.publish('{}/{}/out_json'.format(self.topicRoot,identifier2), json.dumps(jsonDict),0)
         except json.decoder.JSONDecodeError :
             pass
         if self.verbose >= 2 : 

@@ -1,9 +1,9 @@
 from setuptools import setup
 
 setup(
-    name='locura_iotlab_bridge',
+    name='iotlab_mqtt_bridge',
     version='0.1.12',
-    description='Bridge to connect LocURa MQTT ecosystem to IOT-LAB',
+    description='Bridge to connect IOT-LAB to a MQTT broker',
     long_description = open('README.md','r').read(),
     long_description_content_type = 'text/markdown',
     url='https://gitlab.irit.fr/rmess/locura/infra/locura_iotlab_bridge',

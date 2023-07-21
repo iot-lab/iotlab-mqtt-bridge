@@ -104,7 +104,7 @@ if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(prog = 'LocuURa<->iotlab bridge')
     parser.add_argument('-f','--idFile', action='store', default=None, required=False,
-                    help='json dictionnary file with iotlab IDs ans keys and locura IDs as values.')
+                    help='json dictionnary file with iotlab IDs ans keys and target IDs as values.')
     parser.add_argument('-b','--broker', action='store', default=os.environ['LI_BRIDGE_HOST'] if 'LI_BRIDGE_HOST' in os.environ else '127.0.0.1',
                     help='Broker address')
     parser.add_argument('-v','--verbose', action='count', default=int(os.environ['LI_BRIDGE_VERBOSE'] if 'LI_BRIDGE_VERBOSE' in os.environ else False),

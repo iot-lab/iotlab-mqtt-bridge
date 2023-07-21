@@ -4,7 +4,7 @@ setup(
     name='locura_iotlab_bridge',
     version='0.1.12',
     description='Bridge to connect LocURa MQTT ecosystem to IOT-LAB',
-    long_description = open('README','r').read(),
+    long_description = open('README.md','r').read(),
     long_description_content_type = 'text/markdown',
     url='https://gitlab.irit.fr/rmess/locura/infra/locura_iotlab_bridge',
     author='Quentin Vey',

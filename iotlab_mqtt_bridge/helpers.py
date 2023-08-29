@@ -1,7 +1,7 @@
 import os, tempfile
 
 def getScriptPath():
-    return os.path.dirname(os.path.abspath(__file__))+'/locura_iotlab_bridge.py'
+    return os.path.dirname(os.path.abspath(__file__))+'/iotlab_mqtt_bridge.py'
     
     
 __hidden_file_list__ = []   # keep the files in memory so they are not deleted 
@@ -13,7 +13,7 @@ def makeScriptConfig(host, username, password, topic, port=1883, verbose=0):
     environment variables. This file is deleted when the script ends.
     Returns the absolute path of this file."""
     f = tempfile.NamedTemporaryFile(mode='w', 
-                                    prefix="locura_iotlab_bridge", 
+                                    prefix="iotlab_mqtt_bridge", 
                                     delete=True
                                     )
     f.write("LI_BRIDGE_HOST={}\n".format(host))

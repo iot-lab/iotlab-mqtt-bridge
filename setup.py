@@ -2,15 +2,15 @@ from setuptools import setup
 
 setup(
     name='iotlab_mqtt_bridge',
-    version='0.1.12',
+    version='0.1.13',
     description='Bridge to connect IOT-LAB to a MQTT broker',
     long_description = open('README.md','r').read(),
     long_description_content_type = 'text/markdown',
-    url='https://gitlab.irit.fr/rmess/locura/infra/locura_iotlab_bridge',
+    url='https://gitlab.irit.fr/rmess/locura/infra/iotlab_mqtt_bridge',
     author='Quentin Vey',
     author_email='quentin.vey@irit.fr',
     license='CeCILL 2.1',
-    packages=['locura_iotlab_bridge'],
+    packages=['iotlab_mqtt_bridge'],
     install_requires=['iotlabcli>=3.3.0',
                       'paho-mqtt',                     
                       ],

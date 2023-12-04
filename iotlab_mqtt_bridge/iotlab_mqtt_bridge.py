@@ -106,7 +106,7 @@ if __name__ == '__main__':
     parser.add_argument('-f','--idFile', action='store', default=None, required=False,
                     help='json dictionnary file with iotlab IDs ans keys and target IDs as values.')
     parser.add_argument('-b','--broker', action='store', default=os.environ['LI_BRIDGE_HOST'] if 'LI_BRIDGE_HOST' in os.environ else '127.0.0.1',
-                    help='Broker address')
+                    help='Broker address. Notice : LI_BRIDGE_HOST environment variable has the same effect. This argument will override the environment variable')
     parser.add_argument('-v','--verbose', action='count', default=int(os.environ['LI_BRIDGE_VERBOSE'] if 'LI_BRIDGE_VERBOSE' in os.environ else False),
                     help='Verbosity. Specify multiple times for more noise. LI_BRIDGE_VERBOSE environment variable can be used with the same effect.')
     parser.add_argument('-P','--port', action='store', default=int(os.environ['LI_BRIDGE_PORT'] if 'LI_BRIDGE_PORT' in os.environ else 1883),
@@ -115,8 +115,12 @@ if __name__ == '__main__':
                     help='username on the broker. Notice : LI_BRIDGE_USER environment variable has the same effect. This argument will override the environment variable')
     parser.add_argument('-p','--password', action='store', default=os.environ['LI_BRIDGE_PWD'] if 'LI_BRIDGE_PWD' in os.environ else '',
                     help='password on the broker. Advice : use LI_BRIDGE_PWD environment variable instead. This argument will override the environment variable')
+    parser.add_argument('-V','--username_iotlab', action='store', default=os.environ['LI_IOTLAB_USER'] if 'LI_IOTLAB_USER' in os.environ else '',
+                    help='username for iot-lab API. Notice : LI_IOTLAB_USER environment variable has the same effect. This argument will override the environment variable')
+    parser.add_argument('-Q','--password_iotlab', action='store', default=os.environ['LI_IOTLAB_PWD'] if 'LI_IOTLAB_PWD' in os.environ else '',
+                    help='password for iotl-ab API. Advice : use LI_IOTLAB_PWD environment variable instead. This argument will override the environment variable')
     parser.add_argument('-t','--topic_root', action='store', default=os.environ['LI_BRIDGE_TOPIC'] if 'LI_BRIDGE_TOPIC' in os.environ else '',
-                    help='root of the topics. Topics used will be <topic_root>/node-id/out[_json] and <topic_root>/node-id/in')
+                    help='root of the topics. Topics used will be <topic_root>/node-id/out[_json] and <topic_root>/node-id/in. Notice : LI_BRIDGE_TOPIC environment variable has the same effect. This argument will override the environment variable')
     args = parser.parse_args()
 
     if args.idFile is not None :
@@ -133,8 +137,17 @@ if __name__ == '__main__':
     # because this script is only ever to be used directly on 
     # (dev)toulouse.iot-lab.info SSH frontend, where these are supplied as
     # environment variables
-    opts = SerialAggregator.parser.parse_args(['--id', os.environ['EXP_ID']] if 'EXP_ID' in os.environ else '')
-    nodes_list = SerialAggregator.select_nodes(opts)
+    iotlab_args =  []
+    if 'EXP_ID' in os.environ :
+        iotlab_args += ['--id', os.environ['EXP_ID']]
+    if args.username_iotlab :
+        iotlab_args += ['--user', args.username_iotlab ]
+    if args.password_iotlab :
+        iotlab_args += ['--password', args.password_iotlab ]
+    if len(iotlab_args) == 0 :
+        iotlab_args = ''
+
+    opts = SerialAggregator.parser.parse_args(iotlab_args)
     
     if args.verbose :
         print(time.time(), "Started with verbosity {}".format(args.verbose), file=sys.stderr)
@@ -145,6 +158,7 @@ if __name__ == '__main__':
         print("topicRoot", args.topic_root, file=sys.stderr)
         
     
+    nodes_list = SerialAggregator.select_nodes(opts)
 
     bridge = mqttSerialBridge(nodes_list, args.broker, username=args.username, password=args.password, IDMap=mapping, port=args.port, verbose = args.verbose, topicRoot=args.topic_root)
     bridge.loop_forever()

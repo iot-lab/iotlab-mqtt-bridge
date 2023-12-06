@@ -64,7 +64,7 @@ class mqttSerialBridge(mqtt.Client) :
         
     def on_message(self, client, userdata, msg) :
         # parse/convert node id from topic and create node identifier
-        node = msg.topic.split('/')[2]
+        node = msg.topic.replace(self.topicRoot,'',1).split('/')[1]
         if not self.rIDMap is None and node in self.rIDMap :
             node = self.rIDMap[node]
         # decode data

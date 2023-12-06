@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='iotlab_mqtt_bridge',
-    version='0.1.15',
+    version='0.1.16',
     description='Bridge to connect IOT-LAB to a MQTT broker',
     long_description = open('README.md','r').read(),
     long_description_content_type = 'text/markdown',

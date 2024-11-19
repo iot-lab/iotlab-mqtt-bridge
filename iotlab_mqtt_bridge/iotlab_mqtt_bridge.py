@@ -110,7 +110,7 @@ class mqttSerialBridge(mqtt.Client) :
 
 if __name__ == '__main__':
     
-    parser = argparse.ArgumentParser(prog = 'LocuURa<->iotlab bridge')
+    parser = argparse.ArgumentParser(prog = 'iotlab<->MQTT bridge')
     parser.add_argument('-f','--idFile', action='store', default=None, required=False,
                     help='json dictionnary file with iotlab IDs ans keys and target IDs as values.')
     parser.add_argument('-b','--broker', action='store', default=os.environ['LI_BRIDGE_HOST'] if 'LI_BRIDGE_HOST' in os.environ else '127.0.0.1',
@@ -135,6 +135,8 @@ if __name__ == '__main__':
                     help='PEM encoded client certificate filename. Notice : LI_BRIDGE_CERTFILE environment variable has the same effect. This argument will override the environment variable')
     parser.add_argument('-k','--keyfile', action='store', default=os.environ['LI_BRIDGE_KEYFILE'] if 'LI_BRIDGE_KEYFILE' in os.environ else None,
                     help='PEM encoded client private keys filename. Notice : LI_BRIDGE_KEYFILE environment variable has the same effect. This argument will override the environment variable')
+    parser.add_argument('-i','--exp_id', action='store', default=os.environ['EXP_ID'] if 'EXP_ID' in os.environ else None,
+                    help='Experiment ID. Notice : EXP_ID environment variable has the same effect. This argument will override the environment variable')
     args = parser.parse_args()
 
     if args.idFile is not None :
@@ -152,8 +154,8 @@ if __name__ == '__main__':
     # (dev)toulouse.iot-lab.info SSH frontend, where these are supplied as
     # environment variables
     iotlab_args =  []
-    if 'EXP_ID' in os.environ :
-        iotlab_args += ['--id', os.environ['EXP_ID']]
+    if args.exp_id :
+        iotlab_args += ['--id', args.exp_id]
     if args.username_iotlab :
         iotlab_args += ['--user', args.username_iotlab ]
     if args.password_iotlab :

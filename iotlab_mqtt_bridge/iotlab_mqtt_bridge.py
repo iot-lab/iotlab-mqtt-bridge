@@ -7,7 +7,12 @@ import argparse
 import os, sys
 
 class mqttSerialBridge(mqtt.Client) :
-    def __init__(self, nodeList, brokerAddress, username=None, password=None, verbose = None, IDMap=None, topicRoot = '/',port=1883, experimentID = None, clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp") :
+    def __init__(
+            self, nodeList, IDMap=None, topicRoot = '/', experimentID = None,
+            brokerAddress='127.0.0.1', username=None, password=None, port=1883,
+            verbose = None,
+            clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp",
+            ca_certs=None, certfile=None, keyfile=None) :
         super().__init__(client_id="mqttSerialBridge", clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp")
         self.brokerAddress = brokerAddress
         self.port = port
@@ -20,6 +25,9 @@ class mqttSerialBridge(mqtt.Client) :
         self.looping = False
         self.verbose = verbose if verbose else 0
         self.topicRoot = topicRoot if topicRoot[-1] != '/' else topicRoot[:-1]
+        # TLS setup if required
+        if any((ca_certs, certfile, keyfile)):
+            self.tls_set(ca_certs, certfile, keyfile)
         
     def start(self):
         # MQTT connect
@@ -102,7 +110,7 @@ class mqttSerialBridge(mqtt.Client) :
 
 if __name__ == '__main__':
     
-    parser = argparse.ArgumentParser(prog = 'LocuURa<->iotlab bridge')
+    parser = argparse.ArgumentParser(prog = 'iotlab<->MQTT bridge')
     parser.add_argument('-f','--idFile', action='store', default=None, required=False,
                     help='json dictionnary file with iotlab IDs ans keys and target IDs as values.')
     parser.add_argument('-b','--broker', action='store', default=os.environ['LI_BRIDGE_HOST'] if 'LI_BRIDGE_HOST' in os.environ else '127.0.0.1',
@@ -110,7 +118,7 @@ if __name__ == '__main__':
     parser.add_argument('-v','--verbose', action='count', default=int(os.environ['LI_BRIDGE_VERBOSE'] if 'LI_BRIDGE_VERBOSE' in os.environ else False),
                     help='Verbosity. Specify multiple times for more noise. LI_BRIDGE_VERBOSE environment variable can be used with the same effect.')
     parser.add_argument('-P','--port', action='store', default=int(os.environ['LI_BRIDGE_PORT'] if 'LI_BRIDGE_PORT' in os.environ else 1883),
-                    help='Broker port')
+                    help='Broker port', type=int)
     parser.add_argument('-u','--username', action='store', default=os.environ['LI_BRIDGE_USER'] if 'LI_BRIDGE_USER' in os.environ else '',
                     help='username on the broker. Notice : LI_BRIDGE_USER environment variable has the same effect. This argument will override the environment variable')
     parser.add_argument('-p','--password', action='store', default=os.environ['LI_BRIDGE_PWD'] if 'LI_BRIDGE_PWD' in os.environ else '',
@@ -121,6 +129,14 @@ if __name__ == '__main__':
                     help='password for iotl-ab API. Advice : use LI_IOTLAB_PWD environment variable instead. This argument will override the environment variable')
     parser.add_argument('-t','--topic_root', action='store', default=os.environ['LI_BRIDGE_TOPIC'] if 'LI_BRIDGE_TOPIC' in os.environ else '',
                     help='root of the topics. Topics used will be <topic_root>/node-id/out[_json] and <topic_root>/node-id/in. Notice : LI_BRIDGE_TOPIC environment variable has the same effect. This argument will override the environment variable')
+    parser.add_argument('-C','--ca_certs', action='store', default=os.environ['LI_BRIDGE_CA_CERTS'] if 'LI_BRIDGE_CA_CERTS' in os.environ else None,
+                    help='a string path to the Certificate Authority certificate files that are to be treated as trusted by this client. Notice : LI_BRIDGE_CA_CERTS environment variable has the same effect. This argument will override the environment variable')
+    parser.add_argument('-c','--certfile', action='store', default=os.environ['LI_BRIDGE_CERTFILE'] if 'LI_BRIDGE_CERTFILE' in os.environ else None,
+                    help='PEM encoded client certificate filename. Notice : LI_BRIDGE_CERTFILE environment variable has the same effect. This argument will override the environment variable')
+    parser.add_argument('-k','--keyfile', action='store', default=os.environ['LI_BRIDGE_KEYFILE'] if 'LI_BRIDGE_KEYFILE' in os.environ else None,
+                    help='PEM encoded client private keys filename. Notice : LI_BRIDGE_KEYFILE environment variable has the same effect. This argument will override the environment variable')
+    parser.add_argument('-i','--exp_id', action='store', default=os.environ['EXP_ID'] if 'EXP_ID' in os.environ else None,
+                    help='Experiment ID. Notice : EXP_ID environment variable has the same effect. This argument will override the environment variable')
     args = parser.parse_args()
 
     if args.idFile is not None :
@@ -138,8 +154,8 @@ if __name__ == '__main__':
     # (dev)toulouse.iot-lab.info SSH frontend, where these are supplied as
     # environment variables
     iotlab_args =  []
-    if 'EXP_ID' in os.environ :
-        iotlab_args += ['--id', os.environ['EXP_ID']]
+    if args.exp_id :
+        iotlab_args += ['--id', args.exp_id]
     if args.username_iotlab :
         iotlab_args += ['--user', args.username_iotlab ]
     if args.password_iotlab :
@@ -160,7 +176,10 @@ if __name__ == '__main__':
     
     nodes_list = SerialAggregator.select_nodes(opts)
 
-    bridge = mqttSerialBridge(nodes_list, args.broker, username=args.username, password=args.password, IDMap=mapping, port=args.port, verbose = args.verbose, topicRoot=args.topic_root)
+    bridge = mqttSerialBridge(
+                nodes_list, brokerAddress=args.broker, username=args.username, password=args.password, 
+                IDMap=mapping, port=args.port, verbose = args.verbose, topicRoot=args.topic_root,
+                ca_certs=args.ca_certs, certfile=args.certfile, keyfile=args.keyfile)
     bridge.loop_forever()
     
     

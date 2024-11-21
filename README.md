@@ -27,7 +27,7 @@ The following parameters of the bridge can be configured :
 ### Node topics
 
 Each individual node topic root is constructed as follow :
-  1. The local node name is exctracted from its address. Ex: `dwm1001-1.toulouse.iot-lab.info` becomes `dwm1001-1`
+  1. The local node name is extracted from its address. Ex: `dwm1001-1.toulouse.iot-lab.info` becomes `dwm1001-1`
   2. If an ID dictionnary was provided, this local node name (`dwm1001-1` in our example) is used as a key in the dictionnary to determine the new identifier, otherwise the local name is used as identifier.
   3. `topic_root` is prepended to this identifier to form the `node_topic`
   
@@ -47,14 +47,10 @@ Each message received on `<node_topic>/in` gets written directly on the serial p
 ### CLI
 
 Run on iotlab ssh frontend :
+`python3 -m iotlab_mqtt_bridge -b <x.x.x.x> -u <broker_username> -p <broker_password> -t "topic_root/" `
 
-`python3 -m iotlab_mqtt_bridge -b <x.x.x.x> -u <username> -p <password> -t "topic_root/"`
+If TLS is used on the server, it may be necessary to use the argument `-C <ca_cert>`. For example, the Toulouse iot-lab site requires the argument `-C /etc/ssl/certs/ISRG_Root_X1.pem` to authenticate Let's Encrypt certificates.
 
 ### In python script
 See examples/script_launcher.py in module directory.
-
-## Improvements doable if there is demand
-Contact me if you need them, I'll see what I can do.
-  * certificate handling
-  * older experiment handling
   

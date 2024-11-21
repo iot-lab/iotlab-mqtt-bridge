@@ -126,7 +126,7 @@ if __name__ == '__main__':
                     help='Verbosity. Specify multiple times for more noise. LI_BRIDGE_VERBOSE environment variable can be used with the same effect.')
     parser.add_argument('-P','--port', 
                     action='store', 
-                    default=int(os.environ['LI_BRIDGE_PORT'] if 'LI_BRIDGE_PORT' in os.environ else None),
+                    default=int(os.environ['LI_BRIDGE_PORT'] if 'LI_BRIDGE_PORT' in os.environ else 8883),
                     help='Broker port', type=int)
     parser.add_argument('-u','--username', 
                     action='store', 
@@ -177,11 +177,11 @@ if __name__ == '__main__':
     # read iot-lab username/password from file if they were not provided
     if not args.username_iotlab and not args.password_iotlab :
         try :
-            with open('~/.iolabrc') as f :
-                username, pwd64 = **f.readline().split(':')
+            with open(os.path.expanduser('~/.iotlabrc')) as f :
+                username, pwd64 = f.readline().split(':')
                 args.username_iotlab = username   
-                args.password_iotlab = base64.b64decode(pwd64)
-        excpet Exception as e:
+                args.password_iotlab = base64.b64decode(pwd64).decode()
+        except Exception as e:
             print(e)
             print("~/.iolabrc not found. Either call iotlab-auth or pass username_iotlab and password_iotlab as argument or environment variable.")
             sys.exit(-1)
@@ -191,8 +191,6 @@ if __name__ == '__main__':
     
     # sensible defaults for iot-lab
     if args.broker == 'mqtt4.iot-lab.info' :
-        if not args.port :
-            args.port = 8883
         if not args.username :
             args.username = args.username_iotlab
         if not args.password:

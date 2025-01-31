@@ -115,7 +115,7 @@ if __name__ == '__main__':
                     action='store', 
                     default=None, 
                     required=False,
-                    help='json dictionnary file with iotlab IDs ans keys and target IDs as values.')
+                    help='json dictionnary file with iotlab IDs as keys and target IDs as values.')
     parser.add_argument('-b','--broker', 
                     action='store', 
                     default=os.environ['LI_BRIDGE_HOST'] if 'LI_BRIDGE_HOST' in os.environ else 'mqtt4.iot-lab.info',

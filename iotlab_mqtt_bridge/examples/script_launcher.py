@@ -1,4 +1,7 @@
 #!/usr/bin/python3
+
+# This example shows how to reserve nodes, wait until they are available, launch an experiment and start the bridge.
+
 import sys
 from iotlabcli import experiment, get_user_credentials, Api
 import iotlab_mqtt_bridge.helpers as helpers
